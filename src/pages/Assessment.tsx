@@ -26,9 +26,21 @@ const Assessment = () => {
   ];
 
   const currentSection = sections[assessmentState.currentSection];
-  const currentQuestion = currentSection.questions[assessmentState.currentQuestion];
+  const currentQuestion = currentSection?.questions?.[assessmentState.currentQuestion];
   const totalQuestions = assessmentQuestions.length;
   const answeredQuestions = assessmentState.answers.length;
+
+  // Safety check - if no current question, show loading or redirect
+  if (!currentQuestion || !currentSection) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-white/30 border-t-white rounded-full mx-auto mb-4"></div>
+          <p>Loading assessment...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleAnswer = (value: number | string) => {
     let score = 0;
@@ -71,6 +83,8 @@ const Assessment = () => {
   };
 
   const handleNext = () => {
+    if (!currentSection || !currentQuestion) return;
+    
     if (assessmentState.currentQuestion < currentSection.questions.length - 1) {
       setAssessmentState(prev => ({
         ...prev,
@@ -95,6 +109,8 @@ const Assessment = () => {
   };
 
   const handlePrevious = () => {
+    if (!currentSection) return;
+    
     if (assessmentState.currentQuestion > 0) {
       setAssessmentState(prev => ({
         ...prev,
@@ -102,19 +118,24 @@ const Assessment = () => {
       }));
     } else if (assessmentState.currentSection > 0) {
       const prevSection = sections[assessmentState.currentSection - 1];
-      setAssessmentState(prev => ({
-        ...prev,
-        currentSection: prev.currentSection - 1,
-        currentQuestion: prevSection.questions.length - 1
-      }));
+      if (prevSection) {
+        setAssessmentState(prev => ({
+          ...prev,
+          currentSection: prev.currentSection - 1,
+          currentQuestion: prevSection.questions.length - 1
+        }));
+      }
     }
   };
 
   const getCurrentAnswer = () => {
+    if (!currentQuestion) return undefined;
     return assessmentState.answers.find(a => a.questionId === currentQuestion.id);
   };
 
   const renderQuestion = () => {
+    if (!currentQuestion) return null;
+    
     const currentAnswer = getCurrentAnswer();
 
     if (currentQuestion.type === 'likert') {
